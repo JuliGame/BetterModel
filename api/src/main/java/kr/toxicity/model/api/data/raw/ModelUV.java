@@ -8,6 +8,7 @@ package kr.toxicity.model.api.data.raw;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import kr.toxicity.model.api.data.Float4;
 import kr.toxicity.model.api.data.blueprint.ModelBlueprint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,9 +22,9 @@ import java.util.Objects;
  * @param texture texture
  */
 public record ModelUV(
-        @NotNull Float4 uv,
-        float rotation,
-        @Nullable JsonElement texture
+    @NotNull Float4 uv,
+    float rotation,
+    @Nullable JsonElement texture
 ) {
 
     /**

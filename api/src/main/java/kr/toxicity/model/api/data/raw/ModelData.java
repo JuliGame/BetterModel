@@ -10,6 +10,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
 import kr.toxicity.model.api.BetterModel;
+import kr.toxicity.model.api.data.Float3;
+import kr.toxicity.model.api.data.Float4;
 import kr.toxicity.model.api.data.blueprint.BlueprintAnimation;
 import kr.toxicity.model.api.data.blueprint.ModelBlueprint;
 import org.jetbrains.annotations.ApiStatus;
@@ -26,7 +28,7 @@ import static kr.toxicity.model.api.util.CollectionUtil.*;
  * @param meta meta
  * @param resolution resolution
  * @param elements elements
- * @param outliner children
+ * @param outliner outliner
  * @param textures textures
  * @param animations animations
  * @param groups groups (>=BlockBench 5.0.0)
@@ -34,26 +36,26 @@ import static kr.toxicity.model.api.util.CollectionUtil.*;
  */
 @ApiStatus.Internal
 public record ModelData(
-        @NotNull ModelMeta meta,
-        @NotNull ModelResolution resolution,
-        @NotNull List<ModelElement> elements,
-        @NotNull List<ModelChildren> outliner,
-        @NotNull List<ModelTexture> textures,
-        @Nullable List<ModelAnimation> animations,
-        @Nullable List<ModelGroup> groups,
-        @Nullable @SerializedName("animation_variable_placeholders") ModelPlaceholder placeholder
+    @NotNull ModelMeta meta,
+    @NotNull ModelResolution resolution,
+    @NotNull List<ModelElement> elements,
+    @NotNull List<ModelOutliner> outliner,
+    @NotNull List<ModelTexture> textures,
+    @Nullable List<ModelAnimation> animations,
+    @Nullable List<ModelGroup> groups,
+    @Nullable @SerializedName("animation_variable_placeholders") ModelPlaceholder placeholder
 ) {
     /**
      * Gson parser
      */
     public static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(Float3.class, Float3.PARSER)
-            .registerTypeAdapter(Float4.class, Float4.PARSER)
-            .registerTypeAdapter(ModelMeta.class, ModelMeta.PARSER)
-            .registerTypeAdapter(ModelChildren.class, ModelChildren.PARSER)
-            .registerTypeAdapter(ModelPlaceholder.class, ModelPlaceholder.PARSER)
-            .registerTypeAdapter(ModelElement.class, ModelElement.PARSER)
-            .create();
+        .registerTypeAdapter(Float3.class, Float3.PARSER)
+        .registerTypeAdapter(Float4.class, Float4.PARSER)
+        .registerTypeAdapter(ModelMeta.class, ModelMeta.PARSER)
+        .registerTypeAdapter(ModelOutliner.class, ModelOutliner.PARSER)
+        .registerTypeAdapter(ModelPlaceholder.class, ModelPlaceholder.PARSER)
+        .registerTypeAdapter(ModelElement.class, ModelElement.PARSER)
+        .create();
 
     /**
      * Converts model data to blueprint
@@ -72,23 +74,24 @@ public record ModelData(
      */
     public @NotNull ModelLoadResult loadBlueprint(@NotNull String name, boolean strict) {
         var context = new ModelLoadContext(
-                placeholder(),
-                meta(),
-                associate(elements(), ModelElement::uuid),
-                associate(groups(), ModelGroup::uuid),
-                mapToSet(outliner().stream().flatMap(ModelChildren::flatten), ModelChildren::uuid),
-                strict
+            name,
+            placeholder(),
+            meta(),
+            associate(elements(), ModelElement::uuid),
+            associate(groups(), ModelGroup::uuid),
+            mapToSet(outliner().stream().flatMap(ModelOutliner::flatten), ModelOutliner::uuid),
+            strict
         );
         var group = mapToList(outliner(), children -> children.toBlueprint(context));
         return new ModelLoadResult(
-                new ModelBlueprint(
-                        name,
-                        resolution(),
-                        mapToList(textures(), ModelTexture::toBlueprint),
-                        group,
-                        associate(animations().stream().map(raw -> raw.toBlueprint(context, group)), BlueprintAnimation::name)
-                ),
-                context.errors
+            new ModelBlueprint(
+                context.name,
+                resolution(),
+                mapToList(textures(), texture -> texture.toBlueprint(context)),
+                group,
+                associate(animations().stream().map(raw -> raw.toBlueprint(context, group)), BlueprintAnimation::name)
+            ),
+            context.errors
         );
     }
 
@@ -97,11 +100,11 @@ public record ModelData(
      */
     public void assertSupported() {
         elements().stream()
-                .filter(e -> !e.isSupported())
-                .findFirst()
-                .ifPresent(e -> {
-                    throw new RuntimeException("This model file has unsupported element type: " + e.type());
-                });
+            .filter(e -> !e.isSupported())
+            .findFirst()
+            .ifPresent(e -> {
+                throw new RuntimeException("This model file has unsupported element type: " + e.type());
+            });
     }
 
     /**

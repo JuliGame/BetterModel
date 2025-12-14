@@ -15,9 +15,6 @@ dependencies {
     rootProject.project("nms").subprojects.forEach {
         compileOnly(it)
     }
-    rootProject.project("authlib").subprojects.forEach {
-        shade(it)
-    }
     shade(libs.bundles.shadedLibrary) {
         exclude("net.kyori")
         exclude("org.ow2.asm")
@@ -32,6 +29,6 @@ dependencies {
         exclude("net.byteflux")
     }
     compileOnly("net.skinsrestorer:skinsrestorer-api:15.9.0")
-    compileOnly("io.lumine:Mythic-Dist:5.10.1")
+    compileOnly("io.lumine:Mythic-Dist:5.11.1")
     compileOnly("com.nexomc:nexo:1.15.0")
 }

@@ -96,9 +96,8 @@ abstract class BetterModelPluginImpl : AbstractBetterModelPlugin() {
 
     override fun onDisable() {
         if (!firstLoad.get()) return
-        Bukkit.getOnlinePlayers().forEach { BetterModel.registryOrNull(it.uniqueId)?.close() }
-        ADVENTURE_PLATFORM?.close()
         props.managers.forEach(GlobalManager::end)
+        ADVENTURE_PLATFORM?.close()
     }
 
     override fun reload(info: ReloadInfo): ReloadResult {
@@ -155,6 +154,7 @@ abstract class BetterModelPluginImpl : AbstractBetterModelPlugin() {
     override fun playerManager(): PlayerManager = PlayerManagerImpl
     override fun scriptManager(): ScriptManager = ScriptManagerImpl
     override fun skinManager(): SkinManager = SkinManagerImpl
+    override fun profileManager(): ProfileManager = ProfileManagerImpl
 
     override fun config(): BetterModelConfig = props.config
     override fun version(): MinecraftVersion = props.version

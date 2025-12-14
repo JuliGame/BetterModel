@@ -46,11 +46,15 @@ import java.util.function.Predicate;
  */
 public class EntityTracker extends Tracker {
 
-    private static final BonePredicate CREATE_HITBOX_PREDICATE = BonePredicate.from(b -> b.name().name().equals("hitbox")
-            || b.name().tagged(BoneTags.HITBOX)
-            || b.getGroup().getMountController().canMount());
-    private static final BonePredicate CREATE_NAMETAG_PREDICATE = BonePredicate.from(b -> b.name().tagged(BoneTags.TAG, BoneTags.MOB_TAG, BoneTags.PLAYER_TAG));
+    private static final BonePredicate CREATE_HITBOX_PREDICATE = BonePredicate.name("hitbox")
+        .or(BonePredicate.tag(BoneTags.HITBOX))
+        .or(b -> b.getGroup().getMountController().canMount())
+        .notSet();
+
+    private static final BonePredicate CREATE_NAMETAG_PREDICATE = BonePredicate.tag(BoneTags.TAG, BoneTags.MOB_TAG, BoneTags.PLAYER_TAG).notSet();
     private static final BonePredicate HITBOX_REFRESH_PREDICATE = BonePredicate.from(r -> r.getHitBox() != null);
+    private static final BonePredicate HEAD_PREDICATE = BonePredicate.tag(BoneTags.HEAD).notSet();
+    private static final BonePredicate HEAD_WITH_CHILDREN_PREDICATE = BonePredicate.tag(BoneTags.HEAD_WITH_CHILDREN).withChildren();
 
     private final EntityTrackerRegistry registry;
 
@@ -78,39 +82,34 @@ public class EntityTracker extends Tracker {
         var scale = FunctionUtil.throttleTickFloat(() -> scaler().scale(this));
         //Shadow
         Optional.ofNullable(bone("shadow"))
-                .ifPresent(bone -> {
-                    var box = bone.getGroup().getHitBox();
-                    if (box == null) return;
-                    var shadow = BetterModel.nms().create(entity.location(), d -> {
-                        if (entity instanceof BasePlayer) d.moveDuration(1);
-                    });
-                    var baseScale = (float) (box.box().x() + box.box().z()) / 4F;
-                    tick(((t, s) -> {
-                        var wPos = bone.hitBoxPosition();
-                        shadow.shadowRadius(scale.getAsFloat() * baseScale);
-                        shadow.syncEntity(entity);
-                        shadow.syncPosition(location().add(wPos.x, wPos.y, wPos.z));
-                        shadow.sendDirtyEntityData(s.getDataBundler());
-                        shadow.sendPosition(entity, s.getTickBundler());
-                    }));
-                    pipeline.spawnPacketHandler(shadow::spawnWithEntityData);
-                    pipeline.showPacketHandler(shadow::spawnWithEntityData);
-                    pipeline.despawnPacketHandler(shadow::remove);
-                    pipeline.hidePacketHandler(shadow::remove);
+            .ifPresent(bone -> {
+                var box = bone.getGroup().getHitBox();
+                if (box == null) return;
+                var shadow = BetterModel.nms().create(entity.location(), d -> {
+                    if (entity instanceof BasePlayer) d.moveDuration(1);
                 });
+                var baseScale = (float) (box.box().x() + box.box().z()) / 4F;
+                tick(((t, s) -> {
+                    var wPos = bone.hitBoxPosition();
+                    shadow.shadowRadius(scale.getAsFloat() * baseScale);
+                    shadow.syncEntity(entity);
+                    shadow.syncPosition(location().add(wPos.x, wPos.y, wPos.z));
+                    shadow.sendDirtyEntityData(s.getDataBundler());
+                    shadow.sendPosition(entity, s.getTickBundler());
+                }));
+                pipeline.spawnPacketHandler(shadow::spawnWithEntityData);
+                pipeline.showPacketHandler(shadow::spawnWithEntityData);
+                pipeline.despawnPacketHandler(shadow::remove);
+                pipeline.hidePacketHandler(shadow::remove);
+            });
 
         //Animation
         pipeline.defaultPosition(FunctionUtil.throttleTick(() -> entity.passengerPosition().mul(-1)));
         pipeline.scale(scale);
         Function<Quaternionf, Quaternionf> headRotator = r -> r.mul(MathUtil.toQuaternion(bodyRotator.headRotation()));
-        pipeline.addRotationModifier(
-                BonePredicate.of(BonePredicate.State.NOT_SET, r -> r.name().tagged(BoneTags.HEAD)),
-                headRotator
-        );
-        pipeline.addRotationModifier(
-                BonePredicate.of(BonePredicate.State.TRUE, r -> r.name().tagged(BoneTags.HEAD_WITH_CHILDREN)),
-                headRotator
-        );
+
+        pipeline.addRotationModifier(HEAD_PREDICATE, headRotator);
+        pipeline.addRotationModifier(HEAD_WITH_CHILDREN_PREDICATE, headRotator);
 
         var damageTickProvider = FunctionUtil.throttleTickFloat(entity::damageTick);
         var walkSupplier = FunctionUtil.throttleTickBoolean(() -> entity.onWalk() || damageTickProvider.getAsFloat() > 0.25 || pipeline.bones().stream().anyMatch(e -> {
@@ -131,13 +130,13 @@ public class EntityTracker extends Tracker {
             tag.component(entity.customName());
         });
         pipeline.eventDispatcher().handleCreateHitBox((b, l) -> l.mount((h, e) -> {
-                    registry.mountedHitBoxCache.put(e.getUniqueId(), new EntityTrackerRegistry.MountedHitBox(b, e, h));
-                    EventUtil.call(new MountModelEvent(this, b, h, e));
-                })
-                .dismount((h, e) -> {
-                    registry.mountedHitBoxCache.remove(e.getUniqueId());
-                    EventUtil.call(new DismountModelEvent(this, b, h, e));
-                }));
+                registry.mountedHitBoxCache.put(e.getUniqueId(), new EntityTrackerRegistry.MountedHitBox(b, e, h));
+                EventUtil.call(new MountModelEvent(this, b, h, e));
+            })
+            .dismount((h, e) -> {
+                registry.mountedHitBoxCache.remove(e.getUniqueId());
+                EventUtil.call(new DismountModelEvent(this, b, h, e));
+            }));
         BetterModel.plugin().scheduler().task(entity, () -> {
             if (isClosed()) return;
             createHitBox(null, CREATE_HITBOX_PREDICATE);
@@ -301,13 +300,13 @@ public class EntityTracker extends Tracker {
      */
     public @NotNull TrackerData asTrackerData() {
         return new TrackerData(
-                name(),
-                scaler,
-                rotator,
-                modifier,
-                bodyRotator.createData(),
-                hideOption,
-                markForSpawn
+            name(),
+            scaler,
+            rotator,
+            modifier,
+            bodyRotator.createData(),
+            hideOption,
+            markForSpawn
         );
     }
 

@@ -50,14 +50,6 @@ public record BlueprintTexture(
     }
 
     /**
-     * Checks this textures can be rendered.
-     * @return can be rendered.
-     */
-    public boolean canBeRendered() {
-        return !name.startsWith("-");
-    }
-
-    /**
      * Generates mcmeta of this image
      * @return mcmeta
      */
@@ -83,21 +75,19 @@ public record BlueprintTexture(
     /**
      * Creates pack name
      * @param obfuscator obfuscator
-     * @param parent parent
      * @return pack name
      */
-    public @NotNull String packName(@NotNull PackObfuscator obfuscator, @NotNull String parent) {
-        return obfuscator.obfuscate(packName(parent));
+    public @NotNull String packName(@NotNull PackObfuscator obfuscator) {
+        return obfuscator.obfuscate(name());
     }
 
     /**
      * Creates pack namespace
      * @param obfuscator obfuscator
-     * @param parentName parent name
      * @return texture namespace
      */
-    public @NotNull String packNamespace(@NotNull PackObfuscator obfuscator, @NotNull String parentName) {
-        return BetterModel.config().namespace() + ":item/" + packName(obfuscator, parentName);
+    public @NotNull String packNamespace(@NotNull PackObfuscator obfuscator) {
+        return BetterModel.config().namespace() + ":item/" + packName(obfuscator);
     }
 
     /**

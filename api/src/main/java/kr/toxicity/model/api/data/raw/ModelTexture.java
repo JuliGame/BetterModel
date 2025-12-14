@@ -8,6 +8,7 @@ package kr.toxicity.model.api.data.raw;
 
 import com.google.gson.annotations.SerializedName;
 import kr.toxicity.model.api.data.blueprint.BlueprintTexture;
+import kr.toxicity.model.api.util.PackUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,7 @@ public record ModelTexture(
         @SerializedName("frame_time") int frameTime,
         @SerializedName("frame_interpolate") boolean frameInterpolate
 ) {
+
     /**
      * Converts this texture to blueprint textures
      * @return converted textures
