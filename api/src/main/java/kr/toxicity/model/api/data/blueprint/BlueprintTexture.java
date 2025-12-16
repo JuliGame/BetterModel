@@ -99,6 +99,15 @@ public record BlueprintTexture(
     }
 
     /**
+     * Checks whether this texture can be rendered.
+     * @return can render
+     */
+    public boolean canBeRendered() {
+        var image = image();
+        return image != null && image.length > 0;
+    }
+
+    /**
      * Gets model resolution
      * @param resolution parent resolution
      * @return resolution

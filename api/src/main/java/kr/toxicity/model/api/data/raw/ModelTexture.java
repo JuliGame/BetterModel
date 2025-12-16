@@ -8,7 +8,8 @@ package kr.toxicity.model.api.data.raw;
 
 import com.google.gson.annotations.SerializedName;
 import kr.toxicity.model.api.data.blueprint.BlueprintTexture;
-import kr.toxicity.model.api.util.PackUtil;
+
+import org.bukkit.Bukkit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,19 +46,31 @@ public record ModelTexture(
      * Converts this texture to blueprint textures
      * @return converted textures
      */
-    public @NotNull BlueprintTexture toBlueprint() {
-        var decoded = Base64.getDecoder().decode(source().substring(source().indexOf(',') + 1));
+    public @NotNull BlueprintTexture toBlueprint(@NotNull ModelLoadContext context) {
+        var decoded = context.trySupply(
+            () -> {
+                var sourceData = source();
+                var commaIndex = sourceData.indexOf(',');
+                var payload = commaIndex >= 0 ? sourceData.substring(commaIndex + 1) : sourceData;
+                return Base64.getDecoder().decode(payload);
+            },
+            error -> new ModelLoadContext.Fallback<>(
+                new byte[0],
+                "Cannot decode texture '" + name() + "': " + error.getMessage()
+            )
+        );
         var resolution = resolveResolution(decoded, width(), height());
-        var nameIndex = name().indexOf('.');
+        var parsedName = context.placeholder.parseVariable(name());
+        var nameIndex = parsedName.indexOf('.');
         return new BlueprintTexture(
-                nameIndex >= 0 ? name().substring(0, nameIndex) : name(),
-                decoded,
-                resolution[0],
-                resolution[1],
-                uvWidth(),
-                uvHeight(),
-                frameTime(),
-                frameInterpolate()
+            nameIndex >= 0 ? parsedName.substring(0, nameIndex) : parsedName,
+            decoded,
+            resolution[0],
+            resolution[1],
+            uvWidth(),
+            uvHeight(),
+            frameTime(),
+            frameInterpolate()
         );
     }
 
