@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -29,7 +29,7 @@ inline fun copyResourceAs(name: String, block: (InputStream) -> Unit) {
 
 fun File.toImage(): BufferedImage = ImageIO.read(this)
 
-fun File.fileTreeList(): Stream<Path> = Files.find(
+fun File.fileTrees(): Stream<Path> = Files.find(
     toPath(),
     Int.MAX_VALUE,
     { _, attr ->

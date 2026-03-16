@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -72,8 +72,8 @@ internal data class BaseEntityImpl(
             .coerceAtMost(2F)
     }
 
-    override fun passengerPosition(): Vector3f {
-        return handle().passengerPosition()
+    override fun passengerPosition(dest: Vector3f): Vector3f {
+        return handle().passengerPosition(dest)
     }
 
     override fun trackedBy(): Stream<Player> = delegate.trackedBy.stream()

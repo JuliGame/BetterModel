@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -38,16 +38,16 @@ public final class BetterModelLibrary {
                 "bstats-base"
             )
     );
-//    public static final LibraryData CLOUD = register(
-//        "org{}incendo",
-//        "cloud-paper",
-//        builder -> builder
-//            .subModules(
-//                "cloud-brigadier",
-//                "cloud-bukkit"
-//            )
-//            .relocation("org{}incendo{}cloud")
-//    );
+    public static final LibraryData CLOUD = register(
+        "org{}incendo",
+        "cloud-paper",
+        builder -> builder
+            .subModules(
+                "cloud-brigadier",
+                "cloud-bukkit"
+            )
+            .relocation("org{}incendo{}cloud")
+    );
     public static final LibraryData CLOUD_CORE = register(
         "org{}incendo",
         "cloud-core",

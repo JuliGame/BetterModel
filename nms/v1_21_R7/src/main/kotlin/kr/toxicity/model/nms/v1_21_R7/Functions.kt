@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -82,9 +82,9 @@ internal val ONLINE_MODE by lazy(LazyThreadSafetyMode.NONE) {
 
 internal fun List<Int>.toIntSet(): IntSet = IntSet.of(*toIntArray())
 
-internal fun Entity.passengerPosition(): Vector3f {
+internal fun Entity.passengerPosition(dest: Vector3f): Vector3f {
     return attachments.get(EntityAttachment.PASSENGER, 0, yRot).let { v ->
-        Vector3f(v.x.toFloat(), v.y.toFloat(), v.z.toFloat())
+        dest.set(v.x.toFloat(), v.y.toFloat(), v.z.toFloat())
     }
 }
 

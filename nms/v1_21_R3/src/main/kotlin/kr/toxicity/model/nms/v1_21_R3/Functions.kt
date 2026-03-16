@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -53,20 +53,16 @@ internal inline fun <reified T, reified R> createAdaptedFieldGetter(): (T) -> R 
     }
 }
 
-internal fun <H, T> dirtyChecked(hash: () -> H, function: (H) -> T): () -> T {
+internal fun <H, T> dirtyChecked(hash: () -> H, function: (H) -> T, equalityChecker: (H, H) -> Boolean = { a, b -> a == b }): () -> T {
     val lock = Any()
     var h = hash()
     var value = function(h)
     return {
         val newH = hash()
-        when {
-            h === newH -> value
-            h == newH -> value
-            else -> synchronized(lock) {
-                h = newH
-                value = function(h)
-                value
-            }
+        if (equalityChecker(h, newH)) value else synchronized(lock) {
+            h = newH
+            value = function(h)
+            value
         }
     }
 }
@@ -83,9 +79,9 @@ internal val ONLINE_MODE by lazy(LazyThreadSafetyMode.NONE) {
 
 internal fun List<Int>.toIntSet(): IntSet = IntSet.of(*toIntArray())
 
-internal fun Entity.passengerPosition(): Vector3f {
+internal fun Entity.passengerPosition(dest: Vector3f): Vector3f {
     return attachments.get(EntityAttachment.PASSENGER, 0, yRot).let { v ->
-        Vector3f(v.x.toFloat(), v.y.toFloat(), v.z.toFloat())
+        dest.set(v.x.toFloat(), v.y.toFloat(), v.z.toFloat())
     }
 }
 

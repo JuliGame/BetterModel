@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -55,7 +55,6 @@ class BetterModelConfigImpl(yaml: ConfigurationSection) : BetterModelConfig {
     } ?: BetterModelConfig.PackType.ZIP
     private val buildFolderLocation = (yaml.getString("build-folder-location") ?: "BetterModel/build").replace('/', File.separatorChar)
     private val followMobInvisibility = yaml.getBoolean("follow-mob-invisibility", true)
-    private val animatedTextureFrameTime = yaml.getInt("animated-texture-frame-time", 10)
     private val usePurpurAfk = yaml.getBoolean("use-purpur-afk", true)
     private val versionCheck = yaml.getBoolean("version-check", true)
     private val defaultMountController = when (yaml.getString("default-mount-controller")?.lowercase()) {
@@ -85,7 +84,6 @@ class BetterModelConfigImpl(yaml: ConfigurationSection) : BetterModelConfig {
     override fun packType(): BetterModelConfig.PackType = packType
     override fun buildFolderLocation(): String = buildFolderLocation
     override fun followMobInvisibility(): Boolean = followMobInvisibility
-    override fun animatedTextureFrameTime(): Int = animatedTextureFrameTime
     override fun usePurpurAfk(): Boolean = usePurpurAfk
     override fun versionCheck(): Boolean = versionCheck
     override fun defaultMountController(): MountController = defaultMountController

@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -33,7 +33,7 @@ internal val ITEM_DISPLAY_ID = ItemDisplay::class.java.accessors().map {
     it.id
 }
 internal val ITEM_SERIALIZER = ItemDisplay::class.java.accessors().first()
-internal val ITEM_ENTITY_DATA = buildList { 
+internal val ITEM_ENTITY_DATA = buildList {
     add(SHARED_FLAG)
     addAll(ITEM_DISPLAY_ID)
     add(Display.DATA_POS_ROT_INTERPOLATION_DURATION_ID.id)
@@ -58,9 +58,9 @@ internal class TransformationData {
 
     private var _duration = 0
     private val duration get() = SynchedEntityData.DataValue(DISPLAY_INTERPOLATION_DURATION.id, DISPLAY_INTERPOLATION_DURATION.serializer, _duration)
-    private val translation = Item(Vector3f(), DISPLAY_TRANSLATION, MathUtil::isSimilar)
-    private val scale = Item(Vector3f(), DISPLAY_SCALE, MathUtil::isSimilar)
-    private val rotation = Item(Quaternionf(), DISPLAY_ROTATION, MathUtil::isSimilar)
+    private val translation = Item(Vector3f(), DISPLAY_TRANSLATION, MathUtil::isSimilar, Vector3f::set)
+    private val scale = Item(Vector3f(), DISPLAY_SCALE, MathUtil::isSimilar, Vector3f::set)
+    private val rotation = Item(Quaternionf(), DISPLAY_ROTATION, MathUtil::isSimilar, Quaternionf::set)
 
     fun packDirty(): List<SynchedEntityData.DataValue<*>>? {
         val i = translation.cleanIndex + scale.cleanIndex + rotation.cleanIndex
@@ -97,9 +97,10 @@ internal class TransformationData {
     private class Item<T : Any>(
         initialValue: T,
         private val accessor: EntityDataAccessor<T>,
-        private val dirtyChecker: (T, T) -> Boolean
+        private val dirtyChecker: (T, T) -> Boolean,
+        private val setter: (T, T) -> Unit
     ) {
-        private var _t: T = initialValue
+        private val _t: T = initialValue
         private var _dirty = false
 
         val dirty get() = _dirty
@@ -110,10 +111,10 @@ internal class TransformationData {
         } else null
         val forceValue get() = SynchedEntityData.DataValue(accessor.id, accessor.serializer, _t)
 
-        fun set(vector3f: T) {
-            if (dirtyChecker(_t, vector3f)) return
+        fun set(other: T) {
+            if (dirtyChecker(_t, other)) return
             _dirty = true
-            _t = vector3f
+            setter(_t, other)
         }
     }
 }

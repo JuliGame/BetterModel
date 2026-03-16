@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -52,6 +52,7 @@ public enum MountControllers implements MountController {
         @NotNull
         @Override
         public Vector3f move(@NotNull Player player, @NotNull LivingEntity entity, @NotNull Vector3f input, @NotNull Vector3f travelVector) {
+            input.normalize();
             input.y = 0;
             input.x = input.x * 0.5F;
             if (input.z <= 0.0F) {
@@ -67,6 +68,7 @@ public enum MountControllers implements MountController {
         @NotNull
         @Override
         public Vector3f move(@NotNull Player player, @NotNull LivingEntity entity, @NotNull Vector3f input, @NotNull Vector3f travelVector) {
+            input.normalize();
             input.x = input.x * 0.5F;
             if (input.z <= 0.0F) {
                 input.z *= 0.25F;

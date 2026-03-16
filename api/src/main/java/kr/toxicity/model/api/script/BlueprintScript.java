@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -40,6 +40,7 @@ public record BlueprintScript(@NotNull String name, @NotNull AnimationIterator.T
 
     /**
      * Creates animation iterator of this script
+     * @param modifier modifier
      * @return animation iterator
      */
     public @NotNull AnimationIterator<TimeScript> iterator(@NotNull AnimationModifier modifier) {

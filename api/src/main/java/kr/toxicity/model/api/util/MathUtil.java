@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -200,7 +200,18 @@ public final class MathUtil {
      * @return rotation
      */
     public static @NotNull Quaternionf toQuaternion(@NotNull Vector3f vector) {
-        return new Quaternionf()
+        return toQuaternion(vector, new Quaternionf());
+    }
+
+    /**
+     * Converts vector rotation to quaternion
+     * @param vector vector
+     * @param dest destination quaternion
+     * @return rotation
+     */
+    public static @NotNull Quaternionf toQuaternion(@NotNull Vector3f vector, @NotNull Quaternionf dest) {
+        return dest
+            .identity()
             .rotateZYX(
                 vector.z * DEGREES_TO_RADIANS,
                 vector.y * DEGREES_TO_RADIANS,

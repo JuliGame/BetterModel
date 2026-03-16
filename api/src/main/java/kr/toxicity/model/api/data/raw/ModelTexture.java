@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -20,31 +20,42 @@ import java.util.Base64;
 import javax.imageio.ImageIO;
 
 /**
- * A raw model texture.
- * @param name texture's name
- * @param source texture's base64-encoded byte array
- * @param width width
- * @param height height
- * @param uvWidth uv-width
- * @param uvHeight uv-height
- * @param frameTime frame time for animation
- * @param frameInterpolate whether to interpolate frames
+ * Represents a raw texture definition from a model file.
+ * <p>
+ * This record contains the texture's metadata and its content encoded as a Base64 string.
+ * </p>
+ *
+ * @param name the name of the texture file (e.g., "texture.png")
+ * @param source the Base64-encoded content of the texture image
+ * @param width the width of the texture in pixels
+ * @param height the height of the texture in pixels
+ * @param uvWidth the UV width of the texture
+ * @param uvHeight the UV height of the texture
+ * @param frameTime the frame time of the texture
+ * @param frameInterpolate the interpolation flag of the texture
+ * @since 1.15.2
  */
 @ApiStatus.Internal
 public record ModelTexture(
-        @NotNull String name,
-        @NotNull String source,
-        int width,
-        int height,
-        @SerializedName("uv_width") int uvWidth,
-        @SerializedName("uv_height") int uvHeight,
-        @SerializedName("frame_time") int frameTime,
-        @SerializedName("frame_interpolate") boolean frameInterpolate
+    @NotNull String name,
+    @NotNull String source,
+    int width,
+    int height,
+    @SerializedName("uv_width") int uvWidth,
+    @SerializedName("uv_height") int uvHeight,
+    @SerializedName("frame_time") int frameTime,
+    @SerializedName("frame_interpolate") boolean frameInterpolate
 ) {
 
     /**
-     * Converts this texture to blueprint textures
-     * @return converted textures
+     * Converts this raw texture into a processed {@link BlueprintTexture}.
+     * <p>
+     * This method decodes the Base64 source, generates a pack-compliant name, and determines if the texture should be included in the pack.
+     * </p>
+     *
+     * @param context the model loading context
+     * @return the blueprint texture
+     * @since 1.15.2
      */
     public @NotNull BlueprintTexture toBlueprint(@NotNull ModelLoadContext context) {
         var decoded = context.trySupply(
@@ -69,6 +80,7 @@ public record ModelTexture(
             resolution[1],
             uvWidth(),
             uvHeight(),
+            !name.startsWith("-"),
             frameTime(),
             frameInterpolate()
         );
@@ -92,5 +104,17 @@ public record ModelTexture(
                 currentWidth > 0 ? currentWidth : 0,
                 currentHeight > 0 ? currentHeight : 0
         };
+    }
+
+    /**
+     * Returns the texture name without its file extension.
+     *
+     * @return the name without extension
+     * @since 1.15.2
+     */
+    public @NotNull String nameWithoutExtension() {
+        var name = name();
+        var nameIndex = name.lastIndexOf('.');
+        return nameIndex >= 0 ? name.substring(0, nameIndex) : name;
     }
 }

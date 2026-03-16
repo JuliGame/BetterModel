@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -84,6 +84,7 @@ public record MinecraftVersion(int major, int minor, int patch) implements Compa
     /**
      * Parses version from string
      * @param version version like "1.21.11"
+     * @return parsed version
      */
     public static @NotNull MinecraftVersion parse(@NotNull String version) {
         var split = version.split("\\.");

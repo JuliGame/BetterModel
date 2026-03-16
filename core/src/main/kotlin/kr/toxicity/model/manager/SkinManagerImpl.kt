@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -65,7 +65,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(8F, 8F, 8F).div(DIV_FACTOR).inflate(0.5f),
             ElementVector(0f, 4F, 0f).div(DIV_FACTOR),
             UVSpace(8, 8, 8),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(8 + 32, 8),
                 UVFace.SOUTH to UVPos(24 + 32, 8),
@@ -98,7 +98,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(8f, 4f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, 2f, 0f).div(DIV_FACTOR),
             UVSpace(8, 4, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(20, 20 + 16),
                 UVFace.SOUTH to UVPos(32, 20 + 16),
@@ -129,7 +129,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(8f, 4f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, 2f, 0f).div(DIV_FACTOR),
             UVSpace(8, 4, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(20, 24 + 16),
                 UVFace.SOUTH to UVPos(32, 24 + 16),
@@ -160,7 +160,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(8f, 4f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, 2f, 0f).div(DIV_FACTOR),
             UVSpace(8, 4, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(20, 28 + 16),
                 UVFace.SOUTH to UVPos(32, 28 + 16),
@@ -192,7 +192,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(4f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(4, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(20 - 16, 52),
                 UVFace.SOUTH to UVPos(28 - 16, 52),
@@ -224,7 +224,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(4f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(4, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(20 - 16, 58),
                 UVFace.SOUTH to UVPos(28 - 16, 58),
@@ -256,7 +256,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(4f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(4, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(4, 20 + 16),
                 UVFace.SOUTH to UVPos(12, 20 + 16),
@@ -288,7 +288,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(4f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(4, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(4, 26 + 16),
                 UVFace.SOUTH to UVPos(12, 26 + 16),
@@ -320,7 +320,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(4f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(4, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(36 + 16, 52),
                 UVFace.SOUTH to UVPos(44 + 16, 52),
@@ -352,7 +352,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(4f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(4, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(36 + 16, 58),
                 UVFace.SOUTH to UVPos(44 + 16, 58),
@@ -384,7 +384,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(4f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(4, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(44, 20 + 16),
                 UVFace.SOUTH to UVPos(52, 20 + 16),
@@ -416,7 +416,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(4f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(4, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(44, 26 + 16),
                 UVFace.SOUTH to UVPos(52, 26 + 16),
@@ -448,7 +448,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(3f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(3, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(36 + 16, 52),
                 UVFace.SOUTH to UVPos(43 + 16, 52),
@@ -480,7 +480,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(3f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(3, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(36 + 16, 58),
                 UVFace.SOUTH to UVPos(43 + 16, 58),
@@ -512,7 +512,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(3f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(3, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(44, 20 + 16),
                 UVFace.SOUTH to UVPos(51, 20 + 16),
@@ -544,7 +544,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
             ElementVector(3f, 6f, 4f).div(DIV_FACTOR).inflate(0.25f),
             ElementVector(0f, -3f, 0f).div(DIV_FACTOR),
             UVSpace(3, 6, 4),
-            UVElement.ColorType.ARGB,
+            UVElement.ColorType.COMPLEX_ARGB,
             mapOf(
                 UVFace.NORTH to UVPos(44, 26 + 16),
                 UVFace.SOUTH to UVPos(51, 26 + 16),
@@ -598,6 +598,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
 
     private fun SkinModelData.asItem(colors: IntList = IntList.of()): TransformedItemStack = PLUGIN.nms().createSkinItem(
         namespace,
+        data.floats,
         data.flags,
         emptyList(),
         colors + data.colors
@@ -612,6 +613,7 @@ object SkinManagerImpl : SkinManager, GlobalManager {
         }
         return PLUGIN.nms().createSkinItem(
             namespace,
+            data.floats,
             data.flags,
             armorData.strings,
             armorData.colors + data.colors
@@ -624,7 +626,8 @@ object SkinManagerImpl : SkinManager, GlobalManager {
         fun UVModel.write(armorResource: ArmorResource? = null) {
             val model = modelName()
             packName(itemObf.obfuscate(model))
-            asJson("one_pixel", UVLoadContext(
+            asJson(UVLoadContext(
+                UVTextureName.DEFAULT,
                 { modelObf.obfuscate("${model}_$it") },
                 { indexer, _, array ->
                     armorResource?.let { ArmorManager.armor.resource(it) }?.let {
@@ -654,7 +657,8 @@ object SkinManagerImpl : SkinManager, GlobalManager {
         SLIM_RIGHT_FOREARM.write()
         CAPE.write()
 
-        block(UVByteBuilder.emptyImage(uvNamespace, "one_pixel"))
+        block(UVTextureName.DEFAULT.normalPixel(uvNamespace))
+        block(UVTextureName.DEFAULT.translucentPixel(uvNamespace))
     }
 
     private val profileCache = Caffeine.newBuilder()
@@ -681,8 +685,8 @@ object SkinManagerImpl : SkinManager, GlobalManager {
     }
 
     private fun ModelProfile.playerEquals() = player()?.let { player ->
-        ModelProfile.of(player)
-    } == this
+        ModelProfile.of(player).info()
+    } == info()
 
     override fun fallback(): SkinData = fallback
 

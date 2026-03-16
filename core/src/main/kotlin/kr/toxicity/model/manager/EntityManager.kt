@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -17,6 +17,7 @@ import kr.toxicity.model.api.nms.ModelInteractionHand
 import kr.toxicity.model.api.pack.PackZipper
 import kr.toxicity.model.api.tracker.EntityTracker
 import kr.toxicity.model.api.tracker.EntityTrackerRegistry
+import kr.toxicity.model.api.tracker.Tracker
 import kr.toxicity.model.util.PLUGIN
 import kr.toxicity.model.util.registerListener
 import org.bukkit.entity.Entity
@@ -29,7 +30,6 @@ import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.event.player.PlayerInteractAtEntityEvent
 import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.event.player.PlayerQuitEvent
-import org.bukkit.event.world.EntitiesLoadEvent
 import org.bukkit.event.world.EntitiesUnloadEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.potion.PotionEffectType
@@ -95,10 +95,8 @@ object EntityManager : GlobalManager {
             (player.vehicle as? HitBox)?.dismount(player)
         }
         @EventHandler(priority = EventPriority.MONITOR)
-        fun EntitiesLoadEvent.load() { //Chunk load
-            entities.forEach { entity ->
-                BetterModel.registryOrNull(entity.uniqueId)?.refresh()
-            }
+        fun PlayerDeathEvent.death() {
+            BetterModel.registryOrNull(entity.uniqueId)?.despawn()
         }
         @EventHandler(priority = EventPriority.MONITOR)
         fun EntitiesUnloadEvent.unload() { //Chunk unload
@@ -179,7 +177,7 @@ object EntityManager : GlobalManager {
     override fun end() {
         EntityTrackerRegistry.registries {
             it.save()
-            it.close()
+            it.close(Tracker.CloseReason.PLUGIN_DISABLE)
         }
     }
 

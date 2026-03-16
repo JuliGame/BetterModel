@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.resourcefactory.paper)
 }
 
-val libraryDir = layout.buildDirectory.file("generated/paper-library")
+val libraryDir: Provider<RegularFile> = layout.buildDirectory.file("generated/paper-library")
 
 dependencies {
     shade(project(":nms:v1_20_R4")) { isTransitive = false }
@@ -23,9 +23,9 @@ modrinth {
     loaders = PAPER_LOADERS
 }
 
-tasks.modrinth {
-    dependsOn(tasks.modrinthSyncBody)
-}
+//tasks.modrinth {
+//    dependsOn(tasks.modrinthSyncBody)
+//}
 
 val generatePaperLibrary by tasks.registering {
     outputs.file(libraryDir)

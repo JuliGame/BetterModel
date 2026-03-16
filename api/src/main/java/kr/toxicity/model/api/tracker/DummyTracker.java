@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -10,27 +10,33 @@ import kr.toxicity.model.api.animation.AnimationModifier;
 import kr.toxicity.model.api.data.renderer.RenderPipeline;
 import kr.toxicity.model.api.event.CreateDummyTrackerEvent;
 import kr.toxicity.model.api.util.EventUtil;
-import kr.toxicity.model.api.util.FunctionUtil;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector3f;
 
 import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
- * No tracking tracker.
+ * A tracker implementation that is not attached to any entity.
+ * <p>
+ * Dummy trackers are positioned at a fixed location in the world and can be moved manually.
+ * They are useful for static models or models controlled entirely by scripts/plugins.
+ * </p>
+ *
+ * @since 1.15.2
  */
 public final class DummyTracker extends Tracker {
     private volatile Location location;
 
     /**
-     * Dummy tracker.
-     * @param location location
-     * @param pipeline render instance.
-     * @param modifier modifier
-     * @param preUpdateConsumer task on pre-update
+     * Creates a new dummy tracker.
+     *
+     * @param location the initial location
+     * @param pipeline the render pipeline
+     * @param modifier the tracker modifier
+     * @param preUpdateConsumer a consumer to run before the first update
+     * @since 1.15.2
      */
     public DummyTracker(@NotNull Location location, @NotNull RenderPipeline pipeline, @NotNull TrackerModifier modifier, @NotNull Consumer<DummyTracker> preUpdateConsumer) {
         super(pipeline, modifier);
@@ -38,14 +44,15 @@ public final class DummyTracker extends Tracker {
         animate("spawn", AnimationModifier.DEFAULT_WITH_PLAY_ONCE);
         pipeline.scale(() -> scaler().scale(this));
         rotation(() -> new ModelRotation(this.location.getPitch(), this.location.getYaw()));
-        pipeline.defaultPosition(FunctionUtil.asSupplier(new Vector3f()));
         preUpdateConsumer.accept(this);
         EventUtil.call(new CreateDummyTrackerEvent(this));
     }
 
     /**
-     * Moves model to another location.
-     * @param location location
+     * Moves the model to a new location.
+     *
+     * @param location the new location
+     * @since 1.15.2
      */
     public void location(@NotNull Location location) {
         Objects.requireNonNull(location, "location");
@@ -59,8 +66,10 @@ public final class DummyTracker extends Tracker {
     }
 
     /**
-     * Gets location.
-     * @return location
+     * Returns the current location of the tracker.
+     *
+     * @return the location
+     * @since 1.15.2
      */
     @Override
     public @NotNull Location location() {
@@ -68,8 +77,10 @@ public final class DummyTracker extends Tracker {
     }
 
     /**
-     * Spawns model to some player
-     * @param player player
+     * Spawns the model for a specific player.
+     *
+     * @param player the target player
+     * @since 1.15.2
      */
     public void spawn(@NotNull Player player) {
         var bundler = pipeline.createBundler();

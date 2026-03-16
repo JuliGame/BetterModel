@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -16,7 +16,6 @@ import java.util.stream.Stream
 fun <K, V> MutableMap<K, V>.toImmutableView(): Map<K, V> = Collections.unmodifiableMap(this)
 
 fun <T> Stream<T>.toSet(): Set<T> = collect(Collectors.toUnmodifiableSet())
-fun <T> Stream<T>.any(predicate: (T) -> Boolean): Boolean = anyMatch(predicate)
 
 fun parallelIOThreadPool() = try {
     ParallelIOThreadPool()

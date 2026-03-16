@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -14,7 +14,7 @@ import io.netty.channel.ChannelPromise
 import io.papermc.paper.chunk.system.entity.EntityLookup
 import kr.toxicity.model.api.BetterModel
 import kr.toxicity.model.api.bone.RenderedBone
-import kr.toxicity.model.api.data.blueprint.NamedBoundingBox
+import kr.toxicity.model.api.data.blueprint.ModelBoundingBox
 import kr.toxicity.model.api.entity.BaseBukkitEntity
 import kr.toxicity.model.api.entity.BaseBukkitPlayer
 import kr.toxicity.model.api.entity.BaseEntity
@@ -334,12 +334,10 @@ class NMSImpl : NMS {
         }
     }
 
-    override fun createHitBox(entity: BaseEntity, bone: RenderedBone, namedBoundingBox: NamedBoundingBox, mountController: MountController, listener: HitBoxListener): HitBox? {
+    override fun createHitBox(entity: BaseEntity, bone: RenderedBone, boundingBox: ModelBoundingBox, mountController: MountController, listener: HitBoxListener): HitBox? {
         val handle = entity.handle() as? Entity ?: return null
-        val newBox = namedBoundingBox.center()
         return HitBoxImpl(
-            namedBoundingBox.name,
-            newBox,
+            boundingBox.center(),
             bone,
             listener,
             handle,
@@ -358,7 +356,11 @@ class NMSImpl : NMS {
         player as CraftPlayer
         return BasePlayerImpl(
             player,
-            dirtyChecked({ getGameProfile(player.handle) }, { ModelGameProfile(it) }),
+            dirtyChecked(
+                { getGameProfile(player.handle) },
+                { ModelGameProfile(it) },
+                { a, b -> a == b && a.properties["texture"] === b.properties["texture"]}
+            ),
             dirtyChecked({ player.handle.toCustomisation() }, { PlayerSkinParts(it) })
         )
     }

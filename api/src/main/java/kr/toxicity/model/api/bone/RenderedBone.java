@@ -1,6 +1,6 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
@@ -23,6 +23,7 @@ import kr.toxicity.model.api.util.*;
 import kr.toxicity.model.api.util.function.BonePredicate;
 import kr.toxicity.model.api.util.function.FloatConstantSupplier;
 import kr.toxicity.model.api.util.function.FloatSupplier;
+import kr.toxicity.model.api.util.lock.DuplexLock;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;
@@ -36,6 +37,7 @@ import org.joml.Vector3f;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,6 +49,7 @@ public final class RenderedBone implements BoneEventHandler {
 
     private static final int INITIAL_TINT_VALUE = 0xFFFFFF;
     private static final Vector3f EMPTY_VECTOR = new Vector3f();
+    private static final Quaternionf EMPTY_QUATERNION = new Quaternionf();
 
     @Getter
     @NotNull
@@ -200,7 +203,7 @@ public final class RenderedBone implements BoneEventHandler {
             synchronized (this) {
                 if (previous != hitBox) return false;
                 var h = group.getHitBox();
-                if (h == null) h = ModelBoundingBox.MIN.named(name());
+                if (h == null) h = ModelBoundingBox.MIN;
                 var l = eventDispatcher.onCreateHitBox(this, (listener != null ? listener : HitBoxListener.EMPTY).toBuilder()).build();
                 if (hitBox != null) hitBox.removeHitBox();
                 hitBox = BetterModel.nms().createHitBox(entity, this, h, group.getMountController(), l);
@@ -371,25 +374,7 @@ public final class RenderedBone implements BoneEventHandler {
     }
 
     public @NotNull Vector3f worldPosition(@NotNull Vector3f localOffset, @NotNull Vector3f globalOffset, @Nullable UUID uuid) {
-        var state = state(uuid);
-        var progress = state.progress();
-        var current = state.current();
-        var before = state.before();
-        return MathUtil.fma(
-                InterpolationUtil.lerp(before.position(), current.position(), progress)
-                    .add(itemStack.offset())
-                    .add(localOffset)
-                    .rotate(
-                        MathUtil.toQuaternion(InterpolationUtil.lerp(before.rawRotation(), current.rawRotation(), progress))
-                    ),
-                InterpolationUtil.lerp(before.scale(), current.scale(), progress),
-                globalOffset
-
-            )
-            .add(root.getGroup().getPosition())
-            .mul(scale.getAsFloat())
-            .rotateX(-rotation.radianX())
-            .rotateY(-rotation.radianY());
+        return state(uuid).worldPosition(localOffset, globalOffset);
     }
 
     public @NotNull Vector3f worldRotation() {
@@ -397,11 +382,7 @@ public final class RenderedBone implements BoneEventHandler {
     }
 
     public @NotNull Vector3f worldRotation(@Nullable UUID uuid) {
-        var state = state(uuid);
-        var progress = state.progress();
-        var current = state.current();
-        var before = state.before();
-        return InterpolationUtil.lerp(before.rawRotation(), current.rawRotation(), progress);
+        return state(uuid).worldRotation();
     }
 
     public void defaultPosition(@NotNull Supplier<Vector3f> movement) {
@@ -409,11 +390,11 @@ public final class RenderedBone implements BoneEventHandler {
     }
 
     private @NotNull Vector3f modifiedPosition(boolean preventModifierUpdate) {
-        return preventModifierUpdate ? lastModifiedPosition : (lastModifiedPosition = positionModifier.apply(new Vector3f()));
+        return preventModifierUpdate ? lastModifiedPosition : (lastModifiedPosition = positionModifier.apply(lastModifiedPosition.set(EMPTY_VECTOR)));
     }
 
     private @NotNull Quaternionf modifiedRotation(boolean preventModifierUpdate) {
-        return preventModifierUpdate ? lastModifiedRotation : (lastModifiedRotation = rotationModifier.apply(new Quaternionf()));
+        return preventModifierUpdate ? lastModifiedRotation : (lastModifiedRotation = rotationModifier.apply(lastModifiedRotation.set(EMPTY_QUATERNION)));
     }
 
     public boolean tint(@NotNull Predicate<RenderedBone> predicate) {
@@ -571,63 +552,70 @@ public final class RenderedBone implements BoneEventHandler {
     }
 
     final class BoneStateHandler {
-        private boolean firstTick = true;
-        private boolean skipInterpolation = false;
+
         private final @Nullable UUID uuid;
         private final Consumer<UUID> consumer;
+
+        //States
         private final AnimationStateHandler<AnimationMovement> state;
-        private volatile BoneMovement beforeTransform, afterTransform, currentTransform;
+        private final BoneMovement beforeTransform = new BoneMovement(), afterTransform = new BoneMovement();
+        private BoneMovement currentTransform;
         private final DisplayTransformer transformer = display != null ? display.createTransformer() : null;
+
+        //Flags
+        private boolean firstTick = true;
+        private boolean skipInterpolation = false;
+        private final AtomicBoolean updateAfterTransform = new AtomicBoolean();
+
+        //Caches
+        private final BoneMovement movementCache = new BoneMovement();
+        private final Vector3f positionCache = new Vector3f(), scaleCache = new Vector3f();
+        private final Quaternionf rotationCache = new Quaternionf();
+
+        //Lock
+        private final DuplexLock lock = new DuplexLock();
 
         private BoneStateHandler(@Nullable UUID uuid, @NotNull Consumer<UUID> consumer) {
             this.uuid = uuid;
             this.consumer = consumer;
             state = new AnimationStateHandler<>(
                 AnimationMovement.EMPTY,
-                (b, a) -> {
-                    synchronized (this) {
-                        skipInterpolation = (a != null && a.skipInterpolation()) || (parent != null && parent.state(uuid).skipInterpolation);
-                    }
-                }
+                (b, a) -> skipInterpolation = (a != null && a.skipInterpolation()) || (parent != null && parent.state(uuid).skipInterpolation)
             );
         }
 
         private @NotNull BoneMovement before() {
-            return beforeTransform != null ? beforeTransform : (beforeTransform = defaultFrame);
+            return beforeTransform;
         }
 
         private @NotNull BoneMovement current() {
-            return currentTransform != null ? currentTransform : after();
+            var current = currentTransform;
+            return current != null ? current : after();
         }
 
         @NotNull BoneMovement after() {
-            if (afterTransform != null) return afterTransform;
+            if (!updateAfterTransform.compareAndSet(true, false)) return afterTransform;
             var keyframe = state.afterKeyframe();
             if (keyframe == null) keyframe = AnimationMovement.EMPTY;
             var preventModifierUpdate = interpolationDuration() < 1;
-            var def = defaultFrame.plus(keyframe);
+            var def = defaultFrame.plus(keyframe, movementCache);
             if (parent != null) {
                 var p = parent.state(uuid).after();
-                def = new BoneMovement(
-                    MathUtil.fma(
-                            def.position().rotate(p.rotation()),
-                            p.scale(),
-                            p.position()
-                        ).sub(parent.lastModifiedPosition)
-                        .add(modifiedPosition(preventModifierUpdate)),
-                    def.scale().mul(p.scale()),
-                    (keyframe.globalRotation() ? new Quaternionf() : p.rotation().div(parent.lastModifiedRotation, new Quaternionf()))
-                        .mul(def.rotation())
-                        .mul(modifiedRotation(preventModifierUpdate)),
-                    def.rawRotation()
-                );
+                MathUtil.fma(
+                        def.position().rotate(p.rotation()),
+                        p.scale(),
+                        p.position()
+                    ).sub(parent.lastModifiedPosition)
+                    .add(modifiedPosition(preventModifierUpdate));
+                def.scale().mul(p.scale());
+                def.rotation().set((keyframe.globalRotation() ? rotationCache.identity() : p.rotation().div(parent.lastModifiedRotation, rotationCache))
+                    .mul(def.rotation())
+                    .mul(modifiedRotation(preventModifierUpdate)));
             } else {
                 def.position().add(modifiedPosition(preventModifierUpdate));
                 def.rotation().mul(modifiedRotation(preventModifierUpdate));
             }
-            synchronized (this) {
-                return afterTransform = def;
-            }
+            return lock.accessToWriteLock(() -> afterTransform.set(def));
         }
 
         private boolean tick() {
@@ -637,11 +625,9 @@ public final class RenderedBone implements BoneEventHandler {
                     consumer.accept(uuid);
                 }
             }) || firstTick;
-            if (result) {
-                synchronized (this) {
-                    beforeTransform = afterTransform;
-                    afterTransform = null;
-                }
+            if (result && updateAfterTransform.compareAndSet(false, true)) {
+                lock.accessToWriteLock(() -> beforeTransform.set(afterTransform));
+                currentTransform = null;
             }
             firstTick = false;
             return result;
@@ -666,19 +652,47 @@ public final class RenderedBone implements BoneEventHandler {
             transformer.transform(
                 interpolationDuration(),
                 MathUtil.fma(
-                    itemStack.offset().rotate(boneMovement.rotation(), new Vector3f())
+                    itemStack.offset().rotate(boneMovement.rotation(), positionCache)
                         .add(boneMovement.position())
                         .add(root.group.getPosition()),
                     mul,
                     itemStack.position()
                 ).add(defaultPosition.get()),
                 boneMovement.scale()
-                    .mul(itemStack.scale(), new Vector3f())
+                    .mul(itemStack.scale(), scaleCache)
                     .mul(mul)
                     .max(EMPTY_VECTOR),
                 boneMovement.rotation(),
                 bundler
             );
+        }
+
+        private @NotNull Vector3f worldPosition(@NotNull Vector3f localOffset, @NotNull Vector3f globalOffset) {
+            var progress = progress();
+            var current = current();
+            var before = before();
+            return lock.accessToReadLock(() -> MathUtil.fma(
+                    InterpolationUtil.lerp(before.position(), current.position(), progress)
+                        .add(itemStack.offset())
+                        .add(localOffset)
+                        .rotate(
+                            MathUtil.toQuaternion(InterpolationUtil.lerp(before.rawRotation(), current.rawRotation(), progress))
+                        ),
+                    InterpolationUtil.lerp(before.scale(), current.scale(), progress),
+                    globalOffset
+
+                )
+                .add(root.getGroup().getPosition())
+                .mul(scale.getAsFloat())
+                .rotateX(-rotation.radianX())
+                .rotateY(-rotation.radianY()));
+        }
+
+        private @NotNull Vector3f worldRotation() {
+            var progress = progress();
+            var current = current();
+            var before = before();
+            return lock.accessToReadLock(() -> InterpolationUtil.lerp(before.rawRotation(), current.rawRotation(), progress));
         }
     }
 

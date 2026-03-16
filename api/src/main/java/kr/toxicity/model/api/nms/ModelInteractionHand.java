@@ -1,21 +1,25 @@
 /**
  * This source file is part of BetterModel.
- * Copyright (c) 2024–2025 toxicity188
+ * Copyright (c) 2024–2026 toxicity188
  * Licensed under the MIT License.
  * See LICENSE.md file for full license text.
  */
 package kr.toxicity.model.api.nms;
 
 /**
- * Interaction hand of hitbox
+ * Represents the hand used during an interaction with a model hitbox.
+ *
+ * @since 1.15.2
  */
 public enum ModelInteractionHand {
     /**
-     * Left hand
+     * The main hand (usually right).
+     * @since 1.15.2
      */
     LEFT,
     /**
-     * Right hand
+     * The off-hand (usually left).
+     * @since 1.15.2
      */
     RIGHT
 }
