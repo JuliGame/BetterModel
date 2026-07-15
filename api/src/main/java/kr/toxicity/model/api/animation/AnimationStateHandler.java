@@ -185,8 +185,15 @@ public final class AnimationStateHandler<T extends Timed> {
      * @param removeTask remove task
      */
     public void addAnimation(@NotNull String name, @NotNull AnimationIterator<T> iterator, @NotNull AnimationModifier modifier, @NotNull Runnable removeTask) {
+        var initialize = false;
         synchronized (animators) {
             animators.put(name, new TreeIterator(name, iterator, modifier, removeTask), modifier.priority());
+            initialize = currentIterator == null && afterKeyframe == null;
+        }
+        if (initialize) {
+            synchronized (animators) {
+                if (currentIterator == null && afterKeyframe == null) updateAnimation();
+            }
         }
     }
 

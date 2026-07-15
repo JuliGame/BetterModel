@@ -67,6 +67,7 @@ public final class EntityTrackerRegistry {
     @ToString.Include
     private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicBoolean loaded = new AtomicBoolean();
+    private final AtomicBoolean spawnRefreshPending = new AtomicBoolean();
     @ToString.Include
     private final BaseEntity entity;
     private final int id;
@@ -293,6 +294,16 @@ public final class EntityTrackerRegistry {
     }
 
     private void refreshSpawn() {
+        if (!spawnRefreshPending.compareAndSet(false, true)) return;
+        if (entity.platform().task(() -> {
+            spawnRefreshPending.set(false);
+            refreshSpawnNow();
+        }) != null) return;
+        spawnRefreshPending.set(false);
+        refreshSpawnNow();
+    }
+
+    private void refreshSpawnNow() {
         viewedPlayer().forEach(value -> spawnIfNotSpawned(value.player()));
     }
 

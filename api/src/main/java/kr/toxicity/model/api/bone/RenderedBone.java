@@ -454,7 +454,10 @@ public final class RenderedBone implements BoneEventHandler {
         if (get == null && modifier.override(animator.override()) && overrideState.shouldSkip()) return false;
         var type = modifier.type(animator.loop());
         var iterator = get != null ? get.iterator(type) : animator.emptyIterator(type);
-        getOrCreateState(modifier.player()).state.addAnimation(animator.name(), iterator, modifier, removeTask);
+        var state = getOrCreateState(modifier.player());
+        var initialize = state.state.runningAnimation() == null && state.state.afterKeyframe() == null;
+        state.state.addAnimation(animator.name(), iterator, modifier, removeTask);
+        if (initialize) state.prepareInitialFrame();
         return true;
     }
 
@@ -619,6 +622,12 @@ public final class RenderedBone implements BoneEventHandler {
             }
             firstTick = false;
             return result;
+        }
+
+        private void prepareInitialFrame() {
+            if (state.afterKeyframe() == null || !updateAfter.compareAndSet(false, true)) return;
+            lock.accessToWriteLock(() -> before.set(current));
+            updateCurrent.set(true);
         }
 
         private float progress() {

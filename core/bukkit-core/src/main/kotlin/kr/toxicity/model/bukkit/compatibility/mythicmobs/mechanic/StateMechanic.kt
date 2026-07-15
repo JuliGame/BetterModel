@@ -23,7 +23,7 @@ class StateMechanic(mlc: MythicLineConfig) : AbstractSkillMechanic(mlc), INoTarg
 
     private val model = mlc.modelPlaceholder
     private val state = mlc.toPlaceholderString(arrayOf("state", "s"))
-    private val li = mlc.toPlaceholderInteger(arrayOf("li"), 1)
+    private val li = mlc.toPlaceholderInteger(arrayOf("li"), 0)
     private val lo = mlc.toPlaceholderInteger(arrayOf("lo"))
     private val sp = mlc.toNullablePlaceholderFloat(arrayOf("speed", "sp"))
     private val remove = mlc.toPlaceholderBoolean(arrayOf("remove", "r"))
