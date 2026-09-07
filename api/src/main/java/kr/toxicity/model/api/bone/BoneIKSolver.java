@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,7 +32,8 @@ import static kr.toxicity.model.api.util.CollectionUtil.newSequencedAddressingMa
 public final class BoneIKSolver {
 
     private static final int MAX_IK_ITERATION = 20;
-    private static final Vector3f FROM_VECTOR = new Vector3f(0, -1, 0).normalize();
+    private static final float SOLVE_DISTANCE_THRESHOLD = 1F / MathUtil.MODEL_TO_BLOCK_MULTIPLIER;
+    private static final float MIN_ITERATION_CHANGE = 0.01F / MathUtil.MODEL_TO_BLOCK_MULTIPLIER;
 
     private final Map<UUID, RenderedBone> boneMap;
     private final Object2ObjectLinkedOpenHashMap<RenderedBone, IKChain> locators = newSequencedAddressingMap();
@@ -44,12 +47,35 @@ public final class BoneIKSolver {
     public void addLocator(@Nullable UUID ikSource, @NotNull UUID ikTarget, @NotNull RenderedBone locator) {
         var target = boneMap.get(ikTarget);
         if (target == null) return;
-        var source = ikSource == null ? target.root : boneMap.getOrDefault(ikSource, target.root);
-        var chainArray = source.flatten()
-            .filter(bone -> !bone.flattenBones().contains(locator) && bone.flattenBones().contains(target))
-            .toArray(RenderedBone[]::new);
-        if (chainArray.length < 2) return;
-        locators.put(locator, new IKChain(chainArray));
+        var source = ikSource == null ? locator.getParent() : boneMap.get(ikSource);
+        if (source == null) return;
+        var chain = new ArrayList<RenderedBone>();
+        for (var current = target.getParent(); current != source && current != null; current = current.getParent()) {
+            chain.add(current);
+        }
+        if (chain.isEmpty() && target.getParent() != source) return;
+        if (target.getParent() != source && chain.getLast().getParent() != source) return;
+        if (ikSource != null) {
+            chain.add(source);
+        }
+        if (chain.isEmpty()) return;
+        Collections.reverse(chain);
+        var first = chain.getFirst();
+        var endpoint = modelPosition(locator, first);
+        var references = new Vector3f[chain.size()];
+        for (int i = 0; i < chain.size(); i++) {
+            references[i] = modelPosition(
+                i + 1 < chain.size() ? chain.get(i + 1) : target,
+                first
+            ).sub(modelPosition(chain.get(i), first));
+        }
+        locators.put(locator, new IKChain(chain.toArray(RenderedBone[]::new), endpoint, references));
+    }
+
+    private static @NotNull Vector3f modelPosition(@NotNull RenderedBone bone, @NotNull RenderedBone reference) {
+        return bone.restPosition()
+            .add(bone.root.group.getPosition())
+            .sub(reference.root.group.getPosition());
     }
 
     /**
@@ -70,8 +96,11 @@ public final class BoneIKSolver {
             var value = entry.getValue();
             fabrik(
                 value.movements(uuid),
-                value.invertedFirstRotation(uuid),
                 value.cache.lengths,
+                value.cache.bestPositions,
+                value.cache.bestEndpoint,
+                value.endpoint,
+                value.references,
                 locator.state(uuid).after().position().get(value.cache.destination)
                     .add(locator.root.group.getPosition())
                     .sub(value.first().root.group.getPosition())
@@ -79,18 +108,23 @@ public final class BoneIKSolver {
         });
     }
 
-    private record IKChain(@NotNull RenderedBone[] bones, @NotNull IKCache cache) {
+    private record IKChain(
+        @NotNull RenderedBone[] bones,
+        @NotNull Vector3f endpoint,
+        @NotNull Vector3f[] references,
+        @NotNull IKCache cache
+    ) {
 
-        private IKChain(@NotNull RenderedBone[] bones) {
-            this(bones, new IKCache(bones.length));
+        private IKChain(
+            @NotNull RenderedBone[] bones,
+            @NotNull Vector3f endpoint,
+            @NotNull Vector3f[] references
+        ) {
+            this(bones, endpoint, references, new IKCache(bones.length));
         }
 
         private @NotNull RenderedBone first() {
             return bones[0];
-        }
-
-        private @NotNull Quaternionf invertedFirstRotation(@Nullable UUID uuid) {
-            return first().state(uuid).after().rotation().invert(cache.rotation);
         }
 
         private @NotNull BoneMovement[] movements(@Nullable UUID uuid) {
@@ -102,15 +136,36 @@ public final class BoneIKSolver {
         }
     }
 
-    private record IKCache(@NotNull BoneMovement[] movements, float[] lengths, @NotNull Vector3f destination, @NotNull Quaternionf rotation) {
+    private record IKCache(
+        @NotNull BoneMovement[] movements,
+        float[] lengths,
+        @NotNull Vector3f destination,
+        @NotNull Vector3f[] bestPositions,
+        @NotNull Vector3f bestEndpoint
+    ) {
         private IKCache(int length) {
-            this(new BoneMovement[length], new float[length - 1], new Vector3f(), new Quaternionf());
+            this(
+                new BoneMovement[length],
+                new float[length],
+                new Vector3f(),
+                java.util.stream.IntStream.range(0, length)
+                    .mapToObj(i -> new Vector3f())
+                    .toArray(Vector3f[]::new),
+                new Vector3f()
+            );
         }
     }
 
-    private static void fabrik(@NotNull BoneMovement[] bones, @NotNull Quaternionf firstRot, float[] lengths, @NotNull Vector3f target) {
+    private static void fabrik(
+        @NotNull BoneMovement[] bones,
+        float[] lengths,
+        @NotNull Vector3f[] bestPositions,
+        @NotNull Vector3f bestEndpoint,
+        @NotNull Vector3f endpoint,
+        @NotNull Vector3f[] references,
+        @NotNull Vector3f target
+    ) {
         var first = bones[0].position();
-        var last = bones[bones.length - 1].position();
 
         var vecCache = new Vector3f();
         var rootPos = first.get(vecCache);
@@ -120,35 +175,56 @@ public final class BoneIKSolver {
             var after = bones[i + 1];
             lengths[i] = before.position().distance(after.position());
         }
+        var last = bones[bones.length - 1];
+        lengths[bones.length - 1] = last.position().distance(endpoint);
+        var bestDistance = Float.POSITIVE_INFINITY;
+        var lastDistance = Float.POSITIVE_INFINITY;
+        var solvedEndpoint = new Vector3f();
         for (int iter = 0; iter < MAX_IK_ITERATION; iter++) {
             // Forward
-            last.set(target);
-            for (int i = bones.length - 2; i >= 0; i--) {
+            solvedEndpoint.set(target);
+            for (int i = bones.length - 1; i >= 0; i--) {
                 var current = bones[i].position();
-                var next = bones[i + 1].position();
+                var next = i + 1 < bones.length ? bones[i + 1].position() : solvedEndpoint;
                 var dist = current.distanceSquared(next);
                 if (dist < MathUtil.VECTOR_COMPARISON_EPSILON_SQ) continue;
                 InterpolationUtil.lerp(next, current, lengths[i] / (float) Math.sqrt(dist), current);
             }
             // Backward
             first.set(rootPos);
-            for (int i = 0; i < bones.length - 1; i++) {
+            for (int i = 0; i < bones.length; i++) {
                 var current = bones[i].position();
-                var next = bones[i + 1].position();
+                var next = i + 1 < bones.length ? bones[i + 1].position() : solvedEndpoint;
                 var dist = current.distanceSquared(next);
                 if (dist < MathUtil.VECTOR_COMPARISON_EPSILON_SQ) continue;
                 InterpolationUtil.lerp(current, next, lengths[i] / (float) Math.sqrt(dist), next);
             }
-            // Check
-            if (last.distanceSquared(target) < MathUtil.VECTOR_COMPARISON_EPSILON_SQ) break;
+            var distance = solvedEndpoint.distance(target);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestEndpoint.set(solvedEndpoint);
+                for (int i = 0; i < bones.length; i++) {
+                    bestPositions[i].set(bones[i].position());
+                }
+                if (distance <= SOLVE_DISTANCE_THRESHOLD) break;
+            } else if (Math.abs(distance - lastDistance) < MIN_ITERATION_CHANGE) {
+                break;
+            }
+            lastDistance = distance;
+        }
+        for (int i = 0; i < bones.length; i++) {
+            bones[i].position().set(bestPositions[i]);
         }
         var rotCache = new Quaternionf();
-        for (int i = 0; i < bones.length - 1; i++) {
+        for (int i = 0; i < bones.length; i++) {
             var current = bones[i];
-            var next = bones[i + 1];
 
-            var dir = next.position().sub(current.position(), vecCache);
-            current.rotation().set(rotCache.identity().rotateTo(FROM_VECTOR, dir.normalize()).mul(firstRot).mul(current.rotation()));
+            var from = references[i];
+            var to = (i + 1 < bones.length ? bones[i + 1].position() : bestEndpoint)
+                .sub(current.position(), vecCache);
+            if (from.lengthSquared() < MathUtil.VECTOR_COMPARISON_EPSILON_SQ
+                || to.lengthSquared() < MathUtil.VECTOR_COMPARISON_EPSILON_SQ) continue;
+            current.rotation().set(rotCache.identity().rotateTo(from.normalize(), to.normalize()).mul(current.rotation()));
         }
     }
 }

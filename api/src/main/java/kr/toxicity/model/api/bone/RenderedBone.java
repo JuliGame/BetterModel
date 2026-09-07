@@ -153,6 +153,13 @@ public final class RenderedBone implements BoneEventHandler {
         }
     }
 
+    @NotNull Vector3f restPosition() {
+        if (parent == null) return new Vector3f();
+        return parent.restPosition()
+            .add(group.getPosition())
+            .sub(parent.group.getPosition());
+    }
+
     private @NotNull BoneStateHandler state(@Nullable PlatformPlayer player) {
         return state(player != null ? player.uuid() : null);
     }
